@@ -101,13 +101,6 @@ contract FlightSuretyData {
     }
 
     // To avoid spending gas trying to put the contract in a state it already is in
-    modifier differentModeRequest(bool status) {
-        require(
-            status != operational,
-            "Contract already in the state requested"
-        );
-        _;
-    }
 
     modifier flightRegistered(bytes32 flightKey) {
         require(flights[flightKey].isRegistered, "This flight does not exist");
@@ -155,11 +148,7 @@ contract FlightSuretyData {
      * When operational mode is disabled, all write transactions except for this one will fail
      */
 
-    function setOperatingStatus(bool mode)
-        external
-        requireContractOwner
-        differentModeRequest(mode)
-    {
+    function setOperatingStatus(bool mode) external requireContractOwner {
         operational = mode;
     }
 
@@ -232,7 +221,8 @@ contract FlightSuretyData {
         callerAuthorized
     {
         registeredAirlinesCount++;
-        airlines[airlineAddress].registered = true;
+        Airline memory _airline = Airline(true, false);
+        airlines[airlineAddress] = _airline;
         emit AirlineRegistered(originAddress, airlineAddress);
     }
 

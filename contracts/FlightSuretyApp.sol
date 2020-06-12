@@ -154,6 +154,7 @@ contract FlightSuretyApp {
         requireIsOperational
         airlineRegistered
         airlineFunded
+        returns (bool)
     {
         if (flightSuretyData.registeredAirlinesCount() < 4) {
             require(
@@ -161,6 +162,7 @@ contract FlightSuretyApp {
                 "Only first airline registered can register new ones"
             );
             flightSuretyData.registerAirline(airlineAddress, msg.sender);
+            return true;
         } else {
             // multi party consensus
             bool isDuplicate = false;
@@ -176,8 +178,19 @@ contract FlightSuretyApp {
             if (votesLeft(airlineAddress) == 0) {
                 votes[airlineAddress] = new address[](0);
                 flightSuretyData.registerAirline(airlineAddress, msg.sender);
+                return true;
             }
         }
+    }
+
+    function fund()
+        external
+        payable
+        airlineRegistered
+        enoughFund
+        requireIsOperational
+    {
+        flightSuretyData.fund.value(msg.value)(msg.sender);
     }
 
     /**

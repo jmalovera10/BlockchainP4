@@ -1,86 +1,68 @@
 import Config from './config.json';
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
-import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 import Web3 from 'web3';
 
 export default class Contract {
 	constructor(network, callback) {
 		let config = Config[network];
-		// Inject web3
-		if (window.ethereum) {
-			// use metamask's providers
-			// modern browsers
-			this.web3 = new Web3(window.ethereum);
-			// Request accounts access
-			try {
-				window.ethereum.enable();
-			} catch (error) {
-				console.error('User denied access to accounts');
-			}
-		} else if (window.web3) {
-			// legacy browsers
-			this.web3 = new Web3(web3.currentProvider);
-		} else {
-			// fallback for non dapp browsers
-			this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
-		}
-
-		// Load contract
+		this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
 		this.flightSuretyApp = new this.web3.eth.Contract(
 			FlightSuretyApp.abi,
 			config.appAddress
 		);
-		this.flightSuretyData = new this.web3.eth.Contract(
-			FlightSuretyData.abi,
-			config.appAddress
-		);
 		this.initialize(callback);
-		this.account = null;
+		this.owner = null;
+		this.airlines = [];
+		this.flights = [];
+		this.passengers = [];
 	}
 
 	initialize(callback) {
 		this.web3.eth.getAccounts((error, accts) => {
-			if (!error) {
-				this.account = accts[0];
-				callback();
-			} else {
-				console.error(error);
-			}
+			console.log(accts);
+			this.owner = accts[0];
+			this.airlines.push(this.owner);
+
+			callback();
 		});
 	}
 
 	isOperational(callback) {
 		let self = this;
 		self.flightSuretyApp.methods
-			.operational()
-			.call({ from: self.account }, callback);
+			.isOperational()
+			.call({ from: self.owner }, callback);
 	}
 
-	async fetchFlightStatus(flight, destination, landing) {
-		try {
-			await this.flightSuretyApp.methods
-				.fetchFlightStatus(flight, destination, landing)
-				.send({ from: this.account });
-		} catch (error) {
-			return {
-				error: error,
-			};
-		}
+	fetchFlightStatus(airline, flight, callback) {
+		let self = this;
+		let payload = {
+			airline,
+			flight,
+			timestamp: Math.floor(Date.now() / 1000),
+		};
+		self.flightSuretyApp.methods
+			.fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
+			.send({ from: self.owner }, (error, result) => {
+				callback(error, payload);
+			});
 	}
 
 	async registerAirline(airline) {
 		try {
 			await this.flightSuretyApp.methods
 				.registerAirline(airline)
-				.send({ from: this.account });
+				.send({ from: this.owner });
 			const votes = await this.flightSuretyApp.methods
 				.votesLeft(airline)
 				.call();
+			this.airlines.push(airline);
 			return {
-				address: this.account,
+				address: this.owner,
 				votes: votes,
 			};
 		} catch (error) {
+			console.log('ERROR', error);
 			return {
 				error: error,
 			};
@@ -93,6 +75,7 @@ export default class Contract {
 			await this.flightSuretyApp.methods
 				.registerFlight(takeOff, landing, flight, priceWei, from, to)
 				.send({ from: this.account });
+			this.flights.push({ takeOff, landing, flight, price, from, to });
 			return {
 				address: this.account,
 				error: '',

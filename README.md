@@ -19,7 +19,7 @@ To run truffle tests:
 `truffle test ./test/oracles.js`
 
 To use the dapp:
-
+`ganache-cli`
 `truffle migrate`
 `npm run dapp`
 

@@ -61,9 +61,9 @@ contract FlightSuretyData {
      */
     constructor(address _firstAirline) public {
         contractOwner = msg.sender;
-        firstAirline = _firstAirline;
         registeredAirlinesCount = 1;
-        airlines[firstAirline].registered = true;
+        airlines[_firstAirline].registered = true;
+        airlines[_firstAirline].funded = true;
     }
 
     /********************************************************************************************/

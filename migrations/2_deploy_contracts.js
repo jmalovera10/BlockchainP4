@@ -3,7 +3,8 @@ const FlightSuretyData = artifacts.require('FlightSuretyData');
 const fs = require('fs');
 
 module.exports = function (deployer) {
-	let firstAirline = '0xf17f52151EbEF6C7334FAD080c5704D77216b732';
+	// SHOULD CHANGE THIS LINE WITH THE FIRST GANACHE GENERATED ADDRESS
+	let firstAirline = '0x1aB17968f3D346cb62Fa841f9bEa169F126b06f1';
 	deployer.deploy(FlightSuretyData, firstAirline).then(() => {
 		return deployer
 			.deploy(FlightSuretyApp, FlightSuretyData.address)

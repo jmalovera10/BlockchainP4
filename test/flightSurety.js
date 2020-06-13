@@ -71,12 +71,6 @@ contract('Flight Surety Tests', async (accounts) => {
 
 		assert.equal(airlineAmount, 1, 'The airline count should be 1');
 		assert.equal(result, true, 'First Airline was not created');
-
-		// Fund airline to enable transactions inside contract
-		await config.flightSuretyApp.fund({
-			from: config.firstAirline,
-			value: web3.utils.toWei('10', 'ether'),
-		});
 	});
 
 	it('(airline) can not register an Airline from non existing airline', async () => {

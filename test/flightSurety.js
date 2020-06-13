@@ -149,10 +149,6 @@ contract('Flight Surety Tests', async (accounts) => {
 			await config.flightSuretyApp.registerAirline(accounts[5], {
 				from: config.firstAirline,
 			});
-			await config.flightSuretyApp.fund({
-				from: accounts[5],
-				value: web3.utils.toWei('10', 'ether'),
-			});
 			//Enable airline 5
 			await config.flightSuretyApp.registerAirline(accounts[6], {
 				from: config.firstAirline,
@@ -173,21 +169,43 @@ contract('Flight Surety Tests', async (accounts) => {
 		);
 	});
 
-	it('(airline) fund airlines', async () => {
+	it('(airline) not founded can not participate', async () => {
 		try {
-			await config.flightSuretyApp.registerAirline(accounts[7], {
-				from: accounts[7],
+			// Vote 2/4
+			await config.flightSuretyApp.registerAirline(accounts[6], {
+				from: accounts[5],
 			});
 		} catch (e) {
 			console.log(e.message);
 		}
-		const resultSuccess = await config.flightSuretyData.isRegistered.call(
-			accounts[7]
+		const isRegistered = await config.flightSuretyData.isRegistered.call(
+			accounts[6]
 		);
+		const airlineAmount = await config.flightSuretyData.registeredAirlinesCount();
+
+		assert.equal(airlineAmount, 4, 'The airline count should be 4');
 		assert.equal(
-			resultSuccess,
-			true,
-			'Should not register airline since it is not funded'
+			isRegistered,
+			false,
+			'Was not resgistered even with consensus'
 		);
+	});
+
+	it('(airline) multiparty consensus', async () => {
+		try {
+			// Vote 2/4
+			await config.flightSuretyApp.registerAirline(accounts[6], {
+				from: accounts[4],
+			});
+		} catch (e) {
+			console.log(e.message);
+		}
+		const isRegistered = await config.flightSuretyData.isRegistered.call(
+			accounts[6]
+		);
+		const airlineAmount = await config.flightSuretyData.registeredAirlinesCount();
+
+		assert.equal(airlineAmount, 5, 'The airline count should be 5');
+		assert.equal(isRegistered, true, 'Was not resgistered even with consensus');
 	});
 });
